@@ -1,0 +1,19 @@
+{
+  "name": "bad-apple-creator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "preprocess": "node scripts/preprocess.mjs badapple.mp4 public/reference",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  },
+  "dependencies": {
+    "mediabunny": "^1.61.3"
+  }
+}

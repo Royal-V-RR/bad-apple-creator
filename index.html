@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bad Apple!! from your own footage</title>
+<meta name="description" content="Rebuild the Bad Apple!! animation from your own video frames and recorded sounds. Runs entirely in your browser.">
+<link rel="stylesheet" href="/src/ui/styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="bar">
+  <span class="mark">Bad Apple!! / your footage</span>
+  <button class="link" id="btn-info" type="button">Info and credits</button>
+</header>
+
+<main id="main" tabindex="-1">
+
+<section id="view-landing" class="view" aria-labelledby="h-title">
+  <div class="split">
+    <figure class="screen">
+      <canvas id="hero" width="128" height="96" role="img" aria-label="Looping silhouettes from the reference animation"></canvas>
+      <figcaption>Reference silhouettes. Not your footage.</figcaption>
+    </figure>
+    <div class="copy">
+      <h1 id="h-title">Bad Apple!! from your own footage</h1>
+      <p class="lede">Record or upload a short clip. Its frames and noises get cut up and rearranged to replay the animation and the song, in black and white.</p>
+      <div class="actions">
+        <button class="btn primary" id="btn-choose" type="button">Choose a video</button>
+        <button class="btn" id="btn-record" type="button">Record with camera</button>
+        <input id="file" type="file" accept="video/*,.mov,.mp4,.webm" hidden>
+      </div>
+      <p class="hint" id="drop-hint">You can also drop a video onto this page. MP4, WebM and MOV work where your browser can decode them.</p>
+      <p class="note"><strong>Private by design.</strong> Your video and sound are processed on this device. Nothing is uploaded, and there are no accounts.</p>
+      <p class="error" id="landing-error" role="alert" hidden></p>
+    </div>
+  </div>
+</section>
+
+<section id="view-record" class="view" hidden aria-labelledby="h-record">
+  <h2 id="h-record">Record a clip</h2>
+  <div class="split">
+    <figure class="screen"><video id="rec-live" playsinline muted></video><video id="rec-review" playsinline controls hidden></video></figure>
+    <div class="copy">
+      <p class="lede" id="rec-status">The camera and microphone start only when you press Open camera. Your browser will ask for permission. Camera access needs HTTPS on a deployed site.</p>
+      <p class="timer" id="rec-timer" aria-live="off">0.0 / 20 s</p>
+      <div class="actions">
+        <button class="btn primary" id="rec-open" type="button">Open camera</button>
+        <button class="btn primary" id="rec-start" type="button" hidden>Start recording</button>
+        <button class="btn primary" id="rec-stop" type="button" hidden>Stop</button>
+        <button class="btn" id="rec-retake" type="button" hidden>Retake</button>
+        <button class="btn primary" id="rec-use" type="button" hidden>Use this clip</button>
+        <button class="btn" id="rec-back" type="button">Back</button>
+      </div>
+      <p class="hint">Clips up to 20 seconds. Make noises, clap, talk, and move in front of the lens. Both the picture and the sound become building material.</p>
+      <p class="error" id="rec-error" role="alert" hidden></p>
+    </div>
+  </div>
+</section>
+
+<section id="view-setup" class="view" hidden aria-labelledby="h-setup">
+  <h2 id="h-setup">Set up the reconstruction</h2>
+  <div class="split">
+    <div>
+      <figure class="screen"><video id="src-preview" controls playsinline muted></video><figcaption id="src-facts"></figcaption></figure>
+    </div>
+    <form class="copy" id="setup-form" autocomplete="off">
+      <fieldset>
+        <legend>Quality</legend>
+        <div id="preset-list" class="choices"></div>
+      </fieldset>
+      <div class="row">
+        <label>Picture style
+          <select id="s-visualMode"><option value="silhouette">Silhouette: your frames fill the shapes</option><option value="mosaic">Mosaic: tiles of your frames</option></select>
+        </label>
+        <label>Sound style
+          <select id="s-audioMode"><option value="rhythm">Rhythm replacement</option><option value="remix">Sound based remix</option><option value="chaos">Chaos</option></select>
+        </label>
+      </div>
+      <div class="row">
+        <label>Length
+          <select id="s-outputSeconds"><option value="0">Full song</option><option value="30">First 30 seconds</option><option value="60">First minute</option><option value="120">First 2 minutes</option></select>
+        </label>
+        <label class="check"><input type="checkbox" id="s-visualOnly"> Picture only, no sound</label>
+      </div>
+      <details>
+        <summary>Advanced matching and look</summary>
+        <div class="adv">
+          <label>Brightness threshold <output id="o-threshold"></output><input type="range" id="s-threshold" min="-64" max="64" step="1"></label>
+          <label>Contrast <output id="o-contrast"></output><input type="range" id="s-contrast" min="0.5" max="2.5" step="0.1"></label>
+          <label>Texture from your frames <output id="o-texture"></output><input type="range" id="s-texture" min="0" max="1" step="0.05"></label>
+          <label>Pixelation <output id="o-pixelate"></output><input type="range" id="s-pixelate" min="1" max="8" step="1"></label>
+          <label>Switching penalty <output id="o-temporalPenalty"></output><input type="range" id="s-temporalPenalty" min="0" max="2" step="0.05"></label>
+          <label>Sample reuse <output id="o-reuse"></output><input type="range" id="s-reuse" min="0" max="1" step="0.05"></label>
+          <label>Minimum gap before a sound repeats <output id="o-minSeparation"></output><input type="range" id="s-minSeparation" min="0" max="0.5" step="0.01"></label>
+          <label>Random variation <output id="o-variation"></output><input type="range" id="s-variation" min="0" max="1" step="0.05"></label>
+          <label>Volume <output id="o-volume"></output><input type="range" id="s-volume" min="0.2" max="1.5" step="0.05"></label>
+          <label>Dithering
+            <select id="s-dither"><option value="bayer">Ordered dither (1 bit)</option><option value="none">Hard threshold (1 bit)</option><option value="gray">Smooth grey</option></select>
+          </label>
+          <label class="check"><input type="checkbox" id="s-adaptive"> Adaptive threshold for uneven light</label>
+          <label class="check"><input type="checkbox" id="s-invert"> Invert your frames</label>
+          <label class="check"><input type="checkbox" id="s-pitchShift"> Pitch shift sounds to the melody</label>
+        </div>
+      </details>
+      <div class="estimate" id="estimate" aria-live="polite"></div>
+      <div class="actions">
+        <button class="btn primary" id="btn-start" type="submit">Make it</button>
+        <button class="btn" id="btn-other" type="button">Choose another video</button>
+      </div>
+      <p class="error" id="setup-error" role="alert" hidden></p>
+    </form>
+  </div>
+</section>
+
+<section id="view-process" class="view" hidden aria-labelledby="h-process">
+  <h2 id="h-process">Working on it</h2>
+  <p class="hint">Everything below is real work happening on this device. Cancel any time.</p>
+  <ol class="stages" id="stages"></ol>
+  <p class="sr" id="live" role="status" aria-live="polite"></p>
+  <div class="actions"><button class="btn" id="btn-cancel" type="button">Cancel</button></div>
+  <p class="error" id="process-error" role="alert" hidden></p>
+</section>
+
+<section id="view-result" class="view" hidden aria-labelledby="h-result">
+  <h2 id="h-result">Your reconstruction</h2>
+  <div class="split">
+    <div>
+      <div class="compare" id="compare">
+        <figure class="screen"><canvas id="out" aria-label="Generated reconstruction"></canvas><figcaption>Reconstruction from your footage</figcaption></figure>
+        <figure class="screen" id="ref-wrap" hidden><video id="ref-video" playsinline muted preload="none"></video><figcaption>Original reference (not generated)</figcaption></figure>
+      </div>
+      <div class="transport">
+        <button class="btn" id="t-play" type="button" aria-label="Play">Play</button>
+        <input type="range" id="t-seek" min="0" max="1000" value="0" aria-label="Seek">
+        <span id="t-time" class="timer">0:00 / 0:00</span>
+      </div>
+    </div>
+    <div class="copy">
+      <div class="export" id="export" aria-live="polite">
+        <progress id="enc-progress" max="1" value="0"></progress>
+        <p id="enc-status">Waiting to encode.</p>
+        <div class="actions">
+          <button class="btn primary" id="btn-download" type="button" disabled>Download video</button>
+          <button class="btn" id="btn-share" type="button" hidden>Share or save</button>
+        </div>
+        <p class="error" id="enc-error" role="alert" hidden></p>
+        <div class="row" id="retry" hidden>
+          <label>Size <select id="x-scale"><option value="1">Full</option><option value="0.75">75 percent</option><option value="0.5">50 percent</option></select></label>
+          <label>Frame rate <select id="x-fps"></select></label>
+          <label>Length <select id="x-secs"></select></label>
+          <button class="btn" id="btn-reencode" type="button">Encode again</button>
+        </div>
+      </div>
+      <dl class="stats" id="stats"></dl>
+      <div class="actions">
+        <button class="btn" id="btn-compare" type="button" aria-pressed="false">Compare with original</button>
+        <button class="btn" id="btn-tweak" type="button">Change settings</button>
+        <button class="btn" id="btn-restart" type="button">Start over</button>
+        <button class="btn" id="btn-clear" type="button">Clear local data</button>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<dialog id="info">
+  <h2>Info and credits</h2>
+  <p>This is an unofficial fan work. Bad Apple!! is a Touhou Project arrangement; the animation is by Anira, the song arrangement by Alstroemeria Records, and Touhou Project belongs to ZUN and Team Shanghai Alice. Nothing here is affiliated with or endorsed by them.</p>
+  <p>The reference animation is shipped only as a source of timing and silhouettes. Check the rights and distribution rules for the original media before publishing a copy.</p>
+  <p>Your recording never leaves your device. The page loads its own scripts and the reference data, and makes no other network requests. Video encoding uses your browser's built in encoders through WebCodecs, with Mediabunny for packaging.</p>
+  <form method="dialog"><button class="btn primary">Close</button></form>
+</dialog>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
